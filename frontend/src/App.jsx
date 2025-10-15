@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ChatInterface from "./components/ChatInterface";
 import FlowVisualization from "./components/FlowVisualization";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import "./App.css";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <FlowVisualization flowData={currentFlow} isLoading={isLoading} />
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

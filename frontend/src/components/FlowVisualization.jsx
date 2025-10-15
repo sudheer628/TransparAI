@@ -62,10 +62,10 @@ const FlowVisualization = ({ flowData, isLoading }) => {
         animated: true,
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: "#3b82f6",
+          color: "#06b6d4",
         },
         style: {
-          stroke: "#3b82f6",
+          stroke: "#06b6d4",
           strokeWidth: 2,
         },
       })) || [];
@@ -92,7 +92,7 @@ const FlowVisualization = ({ flowData, isLoading }) => {
 
   if (!flowData && !isLoading) {
     return (
-      <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex items-center justify-center">
+      <div className="bg-slate-800/50 backdrop-blur-md rounded-xl border border-cyan-500/30 h-full flex items-center justify-center">
         <div className="text-center text-white/70">
           <GitBranch className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <h3 className="text-lg font-semibold mb-2">AI Reasoning Flow</h3>
@@ -105,9 +105,9 @@ const FlowVisualization = ({ flowData, isLoading }) => {
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col">
+    <div className="bg-slate-800/50 backdrop-blur-md rounded-xl border border-cyan-500/30 h-full flex flex-col">
       {/* Flow Header */}
-      <div className="p-4 border-b border-white/20">
+      <div className="p-4 border-b border-cyan-500/30">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <Eye className="w-5 h-5" />
           Reasoning Visualization
@@ -143,13 +143,13 @@ const FlowVisualization = ({ flowData, isLoading }) => {
             fitView
             attributionPosition="bottom-left"
           >
-            <Controls className="bg-white/10 border-white/20" />
+            <Controls className="bg-slate-800/50 border-cyan-500/30" />
             <MiniMap
-              className="bg-white/10 border-white/20"
-              nodeColor="#3b82f6"
-              maskColor="rgba(255, 255, 255, 0.1)"
+              className="bg-slate-800/50 border-cyan-500/30"
+              nodeColor="#06b6d4"
+              maskColor="rgba(6, 182, 212, 0.1)"
             />
-            <Background variant="dots" gap={12} size={1} color="#ffffff20" />
+            <Background variant="dots" gap={12} size={1} color="#06b6d420" />
           </ReactFlow>
         )}
       </div>
@@ -159,7 +159,7 @@ const FlowVisualization = ({ flowData, isLoading }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 border-t border-white/20 bg-white/5"
+          className="p-4 border-t border-cyan-500/30 bg-slate-900/30"
         >
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-white flex items-center gap-2">

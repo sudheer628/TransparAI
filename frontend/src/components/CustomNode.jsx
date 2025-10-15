@@ -12,7 +12,7 @@ const CustomNode = ({ data, selected }) => {
       case "error":
         return "border-red-400 bg-red-500/20";
       default:
-        return "border-blue-400 bg-blue-500/20";
+        return "border-cyan-400 bg-cyan-500/20";
     }
   };
 

@@ -84,7 +84,7 @@ const ChatInterface = ({ onNewFlow, isLoading, setIsLoading }) => {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col">
+    <div className="bg-slate-800/50 backdrop-blur-md rounded-xl border border-cyan-500/30 h-full flex flex-col">
       {/* Chat Header */}
       <div className="p-4 border-b border-white/20">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
