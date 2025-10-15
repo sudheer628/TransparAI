@@ -16,6 +16,10 @@ class BedrockService {
     if (!this.agentId) {
       throw new Error("BEDROCK_AGENT_ID is required");
     }
+
+    console.log("✅ Bedrock Agent Service initialized");
+    console.log(`   Agent ID: ${this.agentId}`);
+    console.log(`   Region: ${process.env.AWS_REGION || "ap-south-1"}`);
   }
 
   async invokeAgent(inputText, sessionId = null) {
@@ -30,7 +34,7 @@ class BedrockService {
         agentAliasId: this.agentAliasId,
         sessionId: sessionIdToUse,
         inputText: inputText,
-        enableTrace: true, // This is crucial for TransparAI - enables reasoning traces!
+        enableTrace: true,
         endSession: false,
       });
 
@@ -81,6 +85,12 @@ class BedrockService {
 
       // Generate flow diagram data from reasoning traces
       flowData = this.generateFlowData(reasoningTrace);
+
+      console.log(`📊 Flow data generated:`, {
+        nodes: flowData.nodes?.length || 0,
+        edges: flowData.edges?.length || 0,
+        reasoningSteps: reasoningTrace.length,
+      });
 
       return {
         finalResponse: finalResponse.trim(),
@@ -137,60 +147,122 @@ class BedrockService {
   generateFlowData(reasoningTrace) {
     const nodes = [];
     const edges = [];
-    let nodeId = 1;
 
-    // Create nodes for each reasoning step
-    reasoningTrace.forEach((trace, index) => {
-      const node = {
-        id: nodeId.toString(),
-        type: "reasoning",
-        position: { x: index * 200, y: 100 },
-        data: {
-          label: trace.step,
-          type: trace.type,
-          details: trace.details,
-          timestamp: trace.timestamp,
-          service: this.getServiceFromTrace(trace),
-        },
-      };
+    console.log(
+      `🎨 Generating flow data with ${reasoningTrace.length} reasoning traces`
+    );
 
-      nodes.push(node);
+    // Always create a basic flow showing the AI reasoning process
 
-      // Create edge to previous node
-      if (nodeId > 1) {
-        edges.push({
-          id: `e${nodeId - 1}-${nodeId}`,
-          source: (nodeId - 1).toString(),
-          target: nodeId.toString(),
-          type: "smoothstep",
-        });
-      }
-
-      nodeId++;
+    // 1. User Input Node
+    nodes.push({
+      id: "user-input",
+      type: "input",
+      data: {
+        label: "User Question",
+        service: "user",
+        status: "completed",
+      },
     });
 
-    // Add final response node
-    if (nodes.length > 0) {
+    // 2. Bedrock Agent Node
+    nodes.push({
+      id: "bedrock-agent",
+      type: "agent",
+      data: {
+        label: "Bedrock Agent",
+        service: "bedrock-agent",
+        status: "completed",
+      },
+    });
+
+    // 3. Add reasoning step nodes if we have traces
+    let lastNodeId = "bedrock-agent";
+    reasoningTrace.forEach((trace, index) => {
+      const nodeId = `reasoning-${index + 1}`;
       nodes.push({
-        id: nodeId.toString(),
-        type: "output",
-        position: { x: (nodeId - 1) * 200, y: 100 },
+        id: nodeId,
+        type: "reasoning",
         data: {
-          label: "Final Response",
-          type: "output",
-          service: "bedrock",
+          label: trace.step,
+          service: this.getServiceFromTrace(trace),
+          details: trace.details,
+          status: "completed",
         },
       });
 
+      // Connect to previous node
       edges.push({
-        id: `e${nodeId - 1}-${nodeId}`,
-        source: (nodeId - 1).toString(),
-        target: nodeId.toString(),
+        id: `${lastNodeId}-${nodeId}`,
+        source: lastNodeId,
+        target: nodeId,
         type: "smoothstep",
+        animated: true,
       });
-    }
 
-    return { nodes, edges };
+      lastNodeId = nodeId;
+    });
+
+    // 4. Nova Pro Model Node
+    nodes.push({
+      id: "nova-pro",
+      type: "model",
+      data: {
+        label: "Nova Pro Model",
+        service: "nova",
+        status: "completed",
+      },
+    });
+
+    // 5. Final Response Node
+    nodes.push({
+      id: "final-response",
+      type: "output",
+      data: {
+        label: "AI Response",
+        service: "response",
+        status: "completed",
+      },
+    });
+
+    // Create connections
+    edges.push(
+      {
+        id: "user-input-bedrock-agent",
+        source: "user-input",
+        target: "bedrock-agent",
+        type: "smoothstep",
+        animated: true,
+      },
+      {
+        id: `${lastNodeId}-nova-pro`,
+        source: lastNodeId,
+        target: "nova-pro",
+        type: "smoothstep",
+        animated: true,
+      },
+      {
+        id: "nova-pro-final-response",
+        source: "nova-pro",
+        target: "final-response",
+        type: "smoothstep",
+        animated: true,
+      }
+    );
+
+    console.log(
+      `✅ Generated flow: ${nodes.length} nodes, ${edges.length} edges`
+    );
+
+    return {
+      nodes,
+      edges,
+      metadata: {
+        totalNodes: nodes.length,
+        totalEdges: edges.length,
+        reasoningSteps: reasoningTrace.length,
+      },
+    };
   }
 
   getServiceFromTrace(trace) {

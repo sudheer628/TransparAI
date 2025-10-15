@@ -33,7 +33,14 @@ const FlowVisualization = ({ flowData, isLoading }) => {
 
   // Convert flow data to React Flow format
   useEffect(() => {
-    if (!flowData) return;
+    if (!flowData) {
+      console.log("❌ No flow data received");
+      return;
+    }
+
+    console.log("📊 Flow data received:", flowData);
+    console.log("📊 Nodes:", flowData.nodes?.length || 0);
+    console.log("📊 Edges:", flowData.edges?.length || 0);
 
     const flowNodes =
       flowData.nodes?.map((node, index) => ({
@@ -44,12 +51,12 @@ const FlowVisualization = ({ flowData, isLoading }) => {
           y: Math.floor(index / 3) * 150 + 100,
         },
         data: {
-          label: node.service || node.label,
-          service: node.service,
-          action: node.action,
-          details: node.details,
-          status: node.status || "completed",
-          icon: getServiceIcon(node.service),
+          label: node.data?.label || node.label || node.id,
+          service: node.data?.service || node.service,
+          action: node.data?.action || node.action,
+          details: node.data?.details || node.details,
+          status: node.data?.status || node.status || "completed",
+          icon: getServiceIcon(node.data?.service || node.service),
         },
       })) || [];
 
@@ -114,7 +121,9 @@ const FlowVisualization = ({ flowData, isLoading }) => {
         </h2>
         <p className="text-sm text-white/70">
           {isLoading
-            ? "Processing reasoning steps..."
+            ? "AgentCore processing reasoning steps..."
+            : flowData?.agentCoreMetadata
+            ? `AgentCore Flow: ${flowData.agentCoreMetadata.reasoningSteps} reasoning steps • ${flowData.agentCoreMetadata.agentName}`
             : "AWS services orchestration flow"}
         </p>
       </div>
@@ -173,13 +182,36 @@ const FlowVisualization = ({ flowData, isLoading }) => {
               ✕
             </button>
           </div>
-          {selectedNode.data.action && (
-            <p className="text-sm text-blue-200 mb-1">
-              Action: {selectedNode.data.action}
+          {selectedNode.data.agentCorePhase && (
+            <p className="text-sm text-cyan-200 mb-1">
+              <span className="text-white/50">AgentCore Phase:</span>{" "}
+              {selectedNode.data.agentCorePhase}
             </p>
           )}
-          {selectedNode.data.details && (
-            <p className="text-sm text-white/70">{selectedNode.data.details}</p>
+          {selectedNode.data.reasoning && (
+            <p className="text-sm text-blue-200 mb-1">
+              <span className="text-white/50">Reasoning:</span>{" "}
+              {selectedNode.data.reasoning}
+            </p>
+          )}
+          {selectedNode.data.stepNumber && (
+            <p className="text-sm text-green-200 mb-1">
+              <span className="text-white/50">Step:</span>{" "}
+              {selectedNode.data.stepNumber}
+            </p>
+          )}
+          {selectedNode.data.confidence && (
+            <div className="mb-2">
+              <p className="text-xs text-white/50 mb-1">
+                Confidence: {Math.round(selectedNode.data.confidence * 100)}%
+              </p>
+              <div className="w-full bg-slate-700 rounded-full h-2">
+                <div
+                  className="bg-cyan-400 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${selectedNode.data.confidence * 100}%` }}
+                />
+              </div>
+            </div>
           )}
         </motion.div>
       )}
