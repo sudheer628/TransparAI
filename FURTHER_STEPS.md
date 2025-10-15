@@ -116,13 +116,14 @@ User Question → Bedrock Agent → [Reasoning Steps] → Nova Pro Model → AI 
 - [ ] **Camera Controls** - Interactive 3D navigation
 - [ ] **Performance Optimization** - Smooth 60fps rendering
 
-### **Phase 6: Advanced AgentCore Features (Planned)**
+### **Phase 6: Make Flow Visualization More Dynamic (Priority)**
 
-- [ ] **Action Groups Integration** - Add external API capabilities
-- [ ] **Knowledge Base Integration** - Connect to AWS knowledge bases
+- [ ] **Enhanced Trace Capture** - Capture more detailed AgentCore logs and reasoning steps
+- [ ] **Action Group Integration** - Show when external tools are used in the flow
+- [ ] **Knowledge Base Queries** - Visualize knowledge retrieval steps and database queries
+- [ ] **Decision Point Mapping** - Show AgentCore's actual decision tree and branching logic
 - [ ] **Real-time Streaming** - WebSocket for live reasoning updates
-- [ ] **Decision Point Visualization** - Show AgentCore decision points
-- [ ] **Tool Usage Tracking** - Visualize external tool invocations
+- [ ] **Tool Usage Tracking** - Visualize external tool invocations and API calls
 
 ### **Phase 7: Educational Enhancements (Planned)**
 
@@ -306,3 +307,28 @@ The foundation is solid - focus on enhancing the visualization and adding advanc
 
 _Last Updated: December 2024_
 _Project Status: Phase 4 Complete - Ready for 3D Visualization Enhancement_
+
+---
+
+## ⚠️ **Current Flow Visualization Limitation**
+
+### **Flow Behavior Analysis:**
+
+The current flow is **partially dynamic** with the following characteristics:
+
+**Static Base Structure (Always Present):**
+
+```
+User Question → Bedrock Agent → Nova Pro Model → AI Response
+```
+
+**Dynamic Reasoning Steps (Variable):**
+
+- Additional reasoning nodes appear between "Bedrock Agent" and "Nova Pro" based on actual AgentCore traces
+- Different questions may produce different reasoning steps based on complexity
+- Trace types (preprocessing, orchestration, postprocessing) vary by query
+
+**To Make It Fully Dynamic:**
+The current implementation captures basic reasoning traces but doesn't fully represent AgentCore's decision-making process. Phase 6 priorities address this limitation by implementing enhanced trace capture and decision point mapping.
+
+---
