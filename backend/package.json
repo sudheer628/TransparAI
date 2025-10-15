@@ -1,0 +1,30 @@
+{
+  "name": "transparai-backend",
+  "version": "1.0.0",
+  "description": "Backend API for TransparAI",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "verify-aws-setup": "node scripts/verify-aws-setup.js",
+    "setup-aws": "node scripts/aws-setup-helper.js",
+    "deploy": "serverless deploy"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-agent": "^3.490.0",
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.910.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.490.0",
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-sts": "^3.910.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  }
+}
