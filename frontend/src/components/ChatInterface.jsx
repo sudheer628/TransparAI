@@ -55,8 +55,18 @@ const ChatInterface = ({ onNewFlow, isLoading, setIsLoading }) => {
         setMessages((prev) => [...prev, botMessage]);
 
         // Send flow data to parent component
-        if (response.data.reasoning.flowData) {
+        console.log("🔍 Full API response:", response.data);
+        console.log("🔍 Reasoning data:", response.data.reasoning);
+        console.log("🔍 Flow data:", response.data.reasoning?.flowData);
+
+        if (response.data.reasoning?.flowData) {
+          console.log(
+            "✅ Sending flow data to visualization:",
+            response.data.reasoning.flowData
+          );
           onNewFlow(response.data.reasoning.flowData);
+        } else {
+          console.log("❌ No flow data found in response");
         }
       } else {
         throw new Error(response.error || "Failed to get response");

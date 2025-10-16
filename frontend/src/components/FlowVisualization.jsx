@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import ReactFlow, {
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -15,6 +14,84 @@ import CustomNode from "./CustomNode";
 
 const nodeTypes = {
   custom: CustomNode,
+};
+
+// Calculate better node positions to avoid overlapping
+const calculateNodePosition = (node, index, allNodes, allEdges) => {
+  const horizontalSpacing = 320;
+  const verticalSpacing = 150;
+  const centerX = 500;
+
+  // Define fixed positions for key nodes
+  const fixedPositions = {
+    "user-input": { x: centerX, y: 50 },
+    "agentcore-entry": { x: centerX, y: 200 },
+    "nova-pro": { x: centerX, y: 800 },
+    "final-response": { x: centerX, y: 950 },
+    "decision-synthesis": { x: centerX, y: 650 },
+  };
+
+  // Check if this is a fixed position node
+  if (fixedPositions[node.id]) {
+    return fixedPositions[node.id];
+  }
+
+  // Handle reasoning trace nodes (sim_trace_*)
+  if (node.id.startsWith("sim_trace_")) {
+    const reasoningNodes = allNodes.filter((n) =>
+      n.id.startsWith("sim_trace_")
+    );
+    const nodeIndex = reasoningNodes.findIndex((n) => n.id === node.id);
+    const totalNodes = reasoningNodes.length;
+
+    // Arrange in rows of 3
+    const nodesPerRow = 3;
+    const row = Math.floor(nodeIndex / nodesPerRow);
+    const col = nodeIndex % nodesPerRow;
+
+    // Center the nodes in each row
+    const rowWidth = Math.min(totalNodes - row * nodesPerRow, nodesPerRow);
+    const startX = centerX - ((rowWidth - 1) * horizontalSpacing) / 2;
+
+    return {
+      x: startX + col * horizontalSpacing,
+      y: 350 + row * verticalSpacing,
+    };
+  }
+
+  // Handle knowledge base nodes (kb-*)
+  if (node.id.startsWith("kb-")) {
+    const kbNodes = allNodes.filter((n) => n.id.startsWith("kb-"));
+    const nodeIndex = kbNodes.findIndex((n) => n.id === node.id);
+    const totalNodes = kbNodes.length;
+
+    const startX = centerX - ((totalNodes - 1) * horizontalSpacing) / 2;
+    return {
+      x: startX + nodeIndex * horizontalSpacing,
+      y: 500,
+    };
+  }
+
+  // Handle tool nodes (tool-*)
+  if (node.id.startsWith("tool-")) {
+    const toolNodes = allNodes.filter((n) => n.id.startsWith("tool-"));
+    const nodeIndex = toolNodes.findIndex((n) => n.id === node.id);
+    const totalNodes = toolNodes.length;
+
+    const startX = centerX - ((totalNodes - 1) * horizontalSpacing) / 2;
+    return {
+      x: startX + nodeIndex * horizontalSpacing,
+      y: 500,
+    };
+  }
+
+  // Default positioning for any other nodes
+  const row = Math.floor(index / 3);
+  const col = index % 3;
+  return {
+    x: centerX - horizontalSpacing + col * horizontalSpacing,
+    y: 350 + row * verticalSpacing,
+  };
 };
 
 const FlowVisualization = ({ flowData, isLoading }) => {
@@ -39,17 +116,21 @@ const FlowVisualization = ({ flowData, isLoading }) => {
     }
 
     console.log("📊 Flow data received:", flowData);
+    console.log("📊 Flow data structure:", JSON.stringify(flowData, null, 2));
     console.log("📊 Nodes:", flowData.nodes?.length || 0);
     console.log("📊 Edges:", flowData.edges?.length || 0);
+    console.log("📊 Metadata:", flowData.metadata);
 
     const flowNodes =
       flowData.nodes?.map((node, index) => ({
         id: node.id,
         type: "custom",
-        position: {
-          x: (index % 3) * 200 + 100,
-          y: Math.floor(index / 3) * 150 + 100,
-        },
+        position: calculateNodePosition(
+          node,
+          index,
+          flowData.nodes,
+          flowData.edges
+        ),
         data: {
           label: node.data?.label || node.label || node.id,
           service: node.data?.service || node.service,
@@ -57,6 +138,10 @@ const FlowVisualization = ({ flowData, isLoading }) => {
           details: node.data?.details || node.details,
           status: node.data?.status || node.status || "completed",
           icon: getServiceIcon(node.data?.service || node.service),
+          agentCorePhase: node.data?.agentCorePhase,
+          reasoning: node.data?.reasoning,
+          confidence: node.data?.confidence,
+          stepNumber: index + 1,
         },
       })) || [];
 
@@ -153,11 +238,6 @@ const FlowVisualization = ({ flowData, isLoading }) => {
             attributionPosition="bottom-left"
           >
             <Controls className="bg-slate-800/50 border-cyan-500/30" />
-            <MiniMap
-              className="bg-slate-800/50 border-cyan-500/30"
-              nodeColor="#06b6d4"
-              maskColor="rgba(6, 182, 212, 0.1)"
-            />
             <Background variant="dots" gap={12} size={1} color="#06b6d420" />
           </ReactFlow>
         )}
