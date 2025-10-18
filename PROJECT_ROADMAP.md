@@ -50,9 +50,27 @@
 - [ ] External API integration (Serper for Web Search)
 - [ ] Performance optimization
 
-### Phase 5: Deployment
+### Phase 5: Deployment - AWS Amplify 
+Best for: Complete full-stack deployment with CI/CD
 
-- [ ] TBD
+Frontend (React):
+
+Auto-deploys from Git repository
+Built-in CI/CD pipeline
+Custom domain support
+Global CDN distribution
+Backend (Node.js):
+
+Amplify can host backend APIs
+Serverless functions support
+Environment variables management
+
+Steps:
+
+Push code to GitHub/GitLab
+Connect Amplify to repository
+Configure build settings
+Deploy automatically on commits
 
 ## 🚀 Quick Start Commands
 

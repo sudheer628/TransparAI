@@ -4,16 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { chatService } from "../services/api";
 
-const ChatInterface = ({ onNewFlow, isLoading, setIsLoading }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: "bot",
-      content:
-        "Hello! I'm TransparAI. Ask me any ML or AI question, and I'll show you how I think through the answer using AWS services.",
-      timestamp: new Date(),
-    },
-  ]);
+const ChatInterface = ({
+  onNewFlow,
+  isLoading,
+  setIsLoading,
+  messages,
+  setMessages,
+}) => {
   const [inputMessage, setInputMessage] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const messagesEndRef = useRef(null);
