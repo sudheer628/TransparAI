@@ -9,95 +9,166 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { motion } from "framer-motion";
-import { Eye, GitBranch, Zap } from "lucide-react";
+import {
+  Eye,
+  GitBranch,
+  Zap,
+  Maximize2,
+  RotateCcw,
+  Minimize2,
+  X,
+} from "lucide-react";
 import CustomNode from "./CustomNode";
 
 const nodeTypes = {
   custom: CustomNode,
 };
 
-// Calculate better node positions to avoid overlapping
-const calculateNodePosition = (node, index, allNodes, allEdges) => {
-  const horizontalSpacing = 320;
-  const verticalSpacing = 150;
-  const centerX = 500;
-
-  // Define fixed positions for key nodes
-  const fixedPositions = {
-    "user-input": { x: centerX, y: 50 },
-    "agentcore-entry": { x: centerX, y: 200 },
-    "nova-pro": { x: centerX, y: 800 },
-    "final-response": { x: centerX, y: 950 },
-    "decision-synthesis": { x: centerX, y: 650 },
-  };
-
-  // Check if this is a fixed position node
-  if (fixedPositions[node.id]) {
-    return fixedPositions[node.id];
+// Simple and effective layout algorithm to prevent overlapping
+const calculateNodePosition = (
+  node,
+  index,
+  allNodes,
+  allEdges,
+  layoutMode = "grid",
+  isFullscreen = false
+) => {
+  switch (layoutMode) {
+    case "hierarchical":
+      return calculateHierarchicalLayout(node, index, allNodes, isFullscreen);
+    case "grid":
+    default:
+      return calculateGridLayout(node, index, allNodes, isFullscreen);
   }
+};
 
-  // Handle reasoning trace nodes (sim_trace_*)
-  if (node.id.startsWith("sim_trace_")) {
-    const reasoningNodes = allNodes.filter((n) =>
-      n.id.startsWith("sim_trace_")
-    );
-    const nodeIndex = reasoningNodes.findIndex((n) => n.id === node.id);
-    const totalNodes = reasoningNodes.length;
+// Simple grid layout with guaranteed no overlapping
+const calculateGridLayout = (node, index, allNodes, isFullscreen = false) => {
+  const totalNodes = allNodes?.length || 1;
+  const cols = Math.min(isFullscreen ? 6 : 4, Math.ceil(Math.sqrt(totalNodes))); // More columns in fullscreen
+  const horizontalSpacing = isFullscreen ? 400 : 300; // More spacing in fullscreen
+  const verticalSpacing = isFullscreen ? 200 : 150;
 
-    // Arrange in rows of 3
-    const nodesPerRow = 3;
-    const row = Math.floor(nodeIndex / nodesPerRow);
-    const col = nodeIndex % nodesPerRow;
+  const row = Math.floor(index / cols);
+  const col = index % cols;
 
-    // Center the nodes in each row
-    const rowWidth = Math.min(totalNodes - row * nodesPerRow, nodesPerRow);
-    const startX = centerX - ((rowWidth - 1) * horizontalSpacing) / 2;
+  // Calculate actual nodes in this row
+  const remainingNodes = totalNodes - row * cols;
+  const nodesInThisRow = Math.min(cols, remainingNodes);
 
-    return {
-      x: startX + col * horizontalSpacing,
-      y: 350 + row * verticalSpacing,
-    };
-  }
+  // Center each row
+  const rowWidth = (nodesInThisRow - 1) * horizontalSpacing;
+  const centerX = isFullscreen ? 960 : 600; // Wider center for fullscreen
+  const startX = centerX - rowWidth / 2;
 
-  // Handle knowledge base nodes (kb-*)
-  if (node.id.startsWith("kb-")) {
-    const kbNodes = allNodes.filter((n) => n.id.startsWith("kb-"));
-    const nodeIndex = kbNodes.findIndex((n) => n.id === node.id);
-    const totalNodes = kbNodes.length;
-
-    const startX = centerX - ((totalNodes - 1) * horizontalSpacing) / 2;
-    return {
-      x: startX + nodeIndex * horizontalSpacing,
-      y: 500,
-    };
-  }
-
-  // Handle tool nodes (tool-*)
-  if (node.id.startsWith("tool-")) {
-    const toolNodes = allNodes.filter((n) => n.id.startsWith("tool-"));
-    const nodeIndex = toolNodes.findIndex((n) => n.id === node.id);
-    const totalNodes = toolNodes.length;
-
-    const startX = centerX - ((totalNodes - 1) * horizontalSpacing) / 2;
-    return {
-      x: startX + nodeIndex * horizontalSpacing,
-      y: 500,
-    };
-  }
-
-  // Default positioning for any other nodes
-  const row = Math.floor(index / 3);
-  const col = index % 3;
   return {
-    x: centerX - horizontalSpacing + col * horizontalSpacing,
-    y: 350 + row * verticalSpacing,
+    x: startX + col * horizontalSpacing,
+    y: 150 + row * verticalSpacing,
   };
 };
 
-const FlowVisualization = ({ flowData, isLoading }) => {
+// Simple hierarchical layout - much cleaner
+const calculateHierarchicalLayout = (
+  node,
+  index,
+  allNodes,
+  isFullscreen = false
+) => {
+  const horizontalSpacing = isFullscreen ? 450 : 350; // More spacing in fullscreen
+  const verticalSpacing = isFullscreen ? 200 : 160;
+  const centerX = isFullscreen ? 960 : 600; // Wider center for fullscreen
+
+  // Define simple fixed positions for common node types
+  const nodeId = node.id.toLowerCase();
+  const nodeLabel = (node.data?.label || node.label || "").toLowerCase();
+
+  // Input nodes at top
+  if (
+    nodeId.includes("user") ||
+    nodeId.includes("input") ||
+    nodeLabel.includes("user")
+  ) {
+    return { x: centerX, y: 80 };
+  }
+
+  // Output nodes at bottom
+  if (
+    nodeId.includes("response") ||
+    nodeId.includes("output") ||
+    nodeLabel.includes("response")
+  ) {
+    return { x: centerX, y: 800 };
+  }
+
+  // Model nodes near bottom
+  if (
+    nodeId.includes("nova") ||
+    nodeId.includes("claude") ||
+    nodeId.includes("model") ||
+    nodeLabel.includes("nova") ||
+    nodeLabel.includes("claude") ||
+    nodeLabel.includes("model")
+  ) {
+    return { x: centerX, y: 650 };
+  }
+
+  // Group remaining nodes by type and arrange them in layers
+  const middleNodes =
+    allNodes?.filter((n) => {
+      const id = n.id.toLowerCase();
+      const label = (n.data?.label || n.label || "").toLowerCase();
+      return (
+        !id.includes("user") &&
+        !id.includes("input") &&
+        !label.includes("user") &&
+        !id.includes("response") &&
+        !id.includes("output") &&
+        !label.includes("response") &&
+        !id.includes("nova") &&
+        !id.includes("claude") &&
+        !id.includes("model") &&
+        !label.includes("nova") &&
+        !label.includes("claude") &&
+        !label.includes("model")
+      );
+    }) || [];
+
+  const nodeIndexInMiddle = middleNodes.findIndex((n) => n.id === node.id);
+
+  if (nodeIndexInMiddle === -1) {
+    // Fallback position
+    return { x: centerX, y: 400 };
+  }
+
+  // Arrange middle nodes in rows
+  const nodesPerRow = 3;
+  const row = Math.floor(nodeIndexInMiddle / nodesPerRow);
+  const col = nodeIndexInMiddle % nodesPerRow;
+
+  // Calculate nodes in this row for centering
+  const remainingNodes = middleNodes.length - row * nodesPerRow;
+  const nodesInThisRow = Math.min(nodesPerRow, remainingNodes);
+
+  const rowWidth = (nodesInThisRow - 1) * horizontalSpacing;
+  const startX = centerX - rowWidth / 2;
+
+  return {
+    x: startX + col * horizontalSpacing,
+    y: 250 + row * verticalSpacing,
+  };
+};
+
+const FlowVisualization = ({
+  flowData,
+  isLoading,
+  isFullscreen = false,
+  onToggleFullscreen,
+}) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [layoutMode, setLayoutMode] = useState("grid"); // 'hierarchical', 'grid'
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -107,6 +178,45 @@ const FlowVisualization = ({ flowData, isLoading }) => {
   const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
   }, []);
+
+  const onInit = useCallback((instance) => {
+    setReactFlowInstance(instance);
+  }, []);
+
+  const handleFitView = useCallback(() => {
+    if (reactFlowInstance) {
+      reactFlowInstance.fitView({ padding: 0.1, duration: 800 });
+    }
+  }, [reactFlowInstance]);
+
+  const handleResetLayout = useCallback(() => {
+    setLayoutMode("grid");
+    setTimeout(() => {
+      if (reactFlowInstance) {
+        reactFlowInstance.fitView({
+          padding: isFullscreen ? 0.05 : 0.1,
+          duration: 800,
+        });
+      }
+    }, 100);
+  }, [reactFlowInstance, isFullscreen]);
+
+  // Keyboard shortcut for fullscreen toggle
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === "f" && event.ctrlKey && onToggleFullscreen) {
+        event.preventDefault();
+        onToggleFullscreen();
+      }
+      if (event.key === "Escape" && isFullscreen && onToggleFullscreen) {
+        event.preventDefault();
+        onToggleFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [isFullscreen, onToggleFullscreen]);
 
   // Convert flow data to React Flow format
   useEffect(() => {
@@ -129,7 +239,9 @@ const FlowVisualization = ({ flowData, isLoading }) => {
           node,
           index,
           flowData.nodes,
-          flowData.edges
+          flowData.edges,
+          layoutMode,
+          isFullscreen
         ),
         data: {
           label: node.data?.label || node.label || node.id,
@@ -146,25 +258,40 @@ const FlowVisualization = ({ flowData, isLoading }) => {
       })) || [];
 
     const flowEdges =
-      flowData.edges?.map((edge) => ({
+      flowData.edges?.map((edge, index) => ({
         id: `${edge.source}-${edge.target}`,
         source: edge.source,
         target: edge.target,
-        type: "smoothstep",
+        type: layoutMode === "circular" ? "straight" : "smoothstep",
         animated: true,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: "#06b6d4",
+          width: 20,
+          height: 20,
         },
         style: {
           stroke: "#06b6d4",
           strokeWidth: 2,
+          strokeDasharray: edge.type === "conditional" ? "5,5" : undefined,
+        },
+        label: edge.label,
+        labelStyle: {
+          fill: "#ffffff",
+          fontSize: 10,
+          fontWeight: 500,
+        },
+        labelBgStyle: {
+          fill: "#1e293b",
+          fillOpacity: 0.8,
+          rx: 4,
+          ry: 4,
         },
       })) || [];
 
     setNodes(flowNodes);
     setEdges(flowEdges);
-  }, [flowData, setNodes, setEdges]);
+  }, [flowData, layoutMode, isFullscreen, setNodes, setEdges]);
 
   const getServiceIcon = (service) => {
     const icons = {
@@ -197,13 +324,91 @@ const FlowVisualization = ({ flowData, isLoading }) => {
   }
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-md rounded-xl border border-cyan-500/30 h-full flex flex-col">
+    <div
+      className={`bg-slate-800/50 backdrop-blur-md border border-cyan-500/30 h-full flex flex-col ${
+        isFullscreen ? "rounded-none" : "rounded-xl"
+      }`}
+    >
       {/* Flow Header */}
       <div className="p-4 border-b border-cyan-500/30">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Eye className="w-5 h-5" />
-          Reasoning Visualization
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Eye className="w-5 h-5" />
+            Reasoning Visualization
+            {isFullscreen && (
+              <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full ml-2">
+                Fullscreen Mode
+              </span>
+            )}
+          </h2>
+
+          {/* Layout Controls */}
+          <div className="flex items-center gap-3">
+            {!isLoading && flowData && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/50">Layout:</span>
+                  <select
+                    value={layoutMode}
+                    onChange={(e) => setLayoutMode(e.target.value)}
+                    className="bg-slate-700/50 border border-cyan-500/30 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-cyan-400"
+                  >
+                    <option value="grid">Grid</option>
+                    <option value="hierarchical">Hierarchical</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleFitView}
+                    className="p-1.5 bg-slate-700/50 border border-cyan-500/30 rounded hover:bg-slate-600/50 transition-colors"
+                    title="Fit to view"
+                  >
+                    <Maximize2 className="w-3 h-3 text-white/70" />
+                  </button>
+                  <button
+                    onClick={handleResetLayout}
+                    className="p-1.5 bg-slate-700/50 border border-cyan-500/30 rounded hover:bg-slate-600/50 transition-colors"
+                    title="Reset layout"
+                  >
+                    <RotateCcw className="w-3 h-3 text-white/70" />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Fullscreen Toggle */}
+            {onToggleFullscreen && (
+              <div className="flex items-center gap-1 ml-2 pl-2 border-l border-cyan-500/30">
+                <button
+                  onClick={onToggleFullscreen}
+                  className={`p-2 border border-cyan-500/30 rounded hover:bg-slate-600/50 transition-colors ${
+                    isFullscreen
+                      ? "bg-cyan-500/20 text-cyan-300"
+                      : "bg-slate-700/50 text-white/70"
+                  }`}
+                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="w-4 h-4" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4" />
+                  )}
+                </button>
+                {isFullscreen && (
+                  <button
+                    onClick={onToggleFullscreen}
+                    className="p-2 bg-red-500/20 border border-red-500/30 rounded hover:bg-red-500/30 transition-colors text-red-300"
+                    title="Close fullscreen"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <p className="text-sm text-white/70">
           {isLoading
             ? "AgentCore processing reasoning steps..."
@@ -233,53 +438,124 @@ const FlowVisualization = ({ flowData, isLoading }) => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onInit={onInit}
             nodeTypes={nodeTypes}
             fitView
+            fitViewOptions={{
+              padding: isFullscreen ? 0.05 : 0.1,
+              minZoom: 0.5,
+              maxZoom: isFullscreen ? 2 : 1.5,
+              includeHiddenNodes: false,
+            }}
+            minZoom={0.3}
+            maxZoom={2}
             attributionPosition="bottom-left"
+            proOptions={{ hideAttribution: true }}
+            nodesDraggable={true}
+            nodesConnectable={false}
+            elementsSelectable={true}
           >
-            <Controls className="bg-slate-800/50 border-cyan-500/30" />
-            <Background variant="dots" gap={12} size={1} color="#06b6d420" />
+            <Controls
+              className="bg-slate-800/80 border-cyan-500/30 backdrop-blur-sm rounded-lg"
+              showInteractive={false}
+            />
+            <Background
+              variant="dots"
+              gap={20}
+              size={1.5}
+              color="#06b6d415"
+              className="opacity-60"
+            />
           </ReactFlow>
         )}
       </div>
 
-      {/* Node Details Panel */}
+      {/* Enhanced Node Details Panel */}
       {selectedNode && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 border-t border-cyan-500/30 bg-slate-900/30"
+          className="p-4 border-t border-cyan-500/30 bg-slate-900/30 max-h-80 overflow-y-auto"
         >
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-white flex items-center gap-2">
               <span className="text-lg">{selectedNode.data.icon}</span>
               {selectedNode.data.label}
             </h3>
             <button
               onClick={() => setSelectedNode(null)}
-              className="text-white/50 hover:text-white"
+              className="text-white/50 hover:text-white text-xl"
             >
               ✕
             </button>
           </div>
-          {selectedNode.data.agentCorePhase && (
-            <p className="text-sm text-cyan-200 mb-1">
-              <span className="text-white/50">AgentCore Phase:</span>{" "}
-              {selectedNode.data.agentCorePhase}
-            </p>
+
+          {/* Educational Information */}
+          {selectedNode.data.educationalInfo && (
+            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-blue-300 mb-2">
+                🎓 Educational Info
+              </h4>
+              <p className="text-xs text-blue-200 mb-2">
+                <span className="font-medium">Purpose:</span>{" "}
+                {selectedNode.data.educationalInfo.purpose}
+              </p>
+              <p className="text-xs text-blue-200 mb-2">
+                <span className="font-medium">How it works:</span>{" "}
+                {selectedNode.data.educationalInfo.technicalDetails}
+              </p>
+              <p className="text-xs text-cyan-200 mb-1">
+                <span className="font-medium">AWS Service:</span>{" "}
+                {selectedNode.data.educationalInfo.awsService}
+              </p>
+              {selectedNode.data.educationalInfo.learningPoint && (
+                <p className="text-xs text-green-200 mt-2 italic">
+                  💡 {selectedNode.data.educationalInfo.learningPoint}
+                </p>
+              )}
+            </div>
           )}
-          {selectedNode.data.reasoning && (
-            <p className="text-sm text-blue-200 mb-1">
-              <span className="text-white/50">Reasoning:</span>{" "}
-              {selectedNode.data.reasoning}
-            </p>
+
+          {/* Technical Details */}
+          {selectedNode.data.details && (
+            <div className="mb-3 p-3 bg-slate-800/50 border border-slate-600/30 rounded-lg">
+              <h4 className="text-sm font-semibold text-slate-300 mb-2">
+                🔧 Technical Details
+              </h4>
+              {Object.entries(selectedNode.data.details).map(([key, value]) => (
+                <p key={key} className="text-xs text-slate-300 mb-1">
+                  <span className="text-white/70 capitalize">
+                    {key.replace(/([A-Z])/g, " $1")}:
+                  </span>{" "}
+                  <span className="text-cyan-200">
+                    {Array.isArray(value) ? value.join(", ") : value}
+                  </span>
+                </p>
+              ))}
+            </div>
           )}
-          {selectedNode.data.stepNumber && (
-            <p className="text-sm text-green-200 mb-1">
-              <span className="text-white/50">Step:</span>{" "}
-              {selectedNode.data.stepNumber}
-            </p>
+
+          {/* Data Flow */}
+          {selectedNode.data.educationalInfo?.dataFlow && (
+            <div className="mb-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-green-300 mb-2">
+                🔄 Data Flow
+              </h4>
+              <p className="text-xs text-green-200">
+                {selectedNode.data.educationalInfo.dataFlow}
+              </p>
+            </div>
           )}
+
+          {/* Legacy fields for backward compatibility */}
+          {selectedNode.data.reasoning &&
+            !selectedNode.data.educationalInfo && (
+              <p className="text-sm text-blue-200 mb-1">
+                <span className="text-white/50">Reasoning:</span>{" "}
+                {selectedNode.data.reasoning}
+              </p>
+            )}
+
           {selectedNode.data.confidence && (
             <div className="mb-2">
               <p className="text-xs text-white/50 mb-1">
