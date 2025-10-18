@@ -118,8 +118,14 @@ class BedrockService {
       );
       console.log(`🔍 Generated flow data:`, JSON.stringify(flowData, null, 2));
 
+      // Post-process the response to handle edge cases
+      const processedResponse = this.postProcessResponse(
+        finalResponse.trim(),
+        inputText
+      );
+
       return {
-        finalResponse: finalResponse.trim(),
+        finalResponse: processedResponse,
         reasoningTrace,
         flowData,
       };
@@ -940,7 +946,9 @@ class BedrockService {
           awsService: "Amazon Bedrock Agent Runtime",
           dataFlow: "Question Analysis → Tool Selection → Execution Planning",
           learningPoint:
-            "Modern AI systems make intelligent decisions about which tools to use for each specific question",
+            this.classifyMessageType(inputText) === "Greeting"
+              ? "Even simple greetings go through the full AI reasoning pipeline to ensure appropriate responses"
+              : "Modern AI systems make intelligent decisions about which tools to use for each specific question",
         },
       },
     });
@@ -1188,7 +1196,19 @@ class BedrockService {
 
   // Helper methods for enhanced flow generation
   classifyMessageType(inputText) {
-    const text = inputText.toLowerCase();
+    const text = inputText.toLowerCase().trim();
+
+    // Handle greetings
+    if (
+      text === "hi" ||
+      text === "hello" ||
+      text === "hey" ||
+      text === "good morning" ||
+      text === "good afternoon"
+    ) {
+      return "Greeting";
+    }
+
     if (text.includes("what is") || text.includes("explain"))
       return "Definition Request";
     if (text.includes("how") || text.includes("process"))
@@ -1244,6 +1264,47 @@ class BedrockService {
     decisions.push("Use step-by-step reasoning");
 
     return decisions;
+  }
+
+  // Post-process responses to handle edge cases and improve user experience
+  postProcessResponse(response, inputText) {
+    const text = inputText.toLowerCase().trim();
+
+    // Handle unhelpful responses to greetings
+    if (
+      (text === "hi" || text === "hello" || text === "hey") &&
+      (response.includes("does not require a specific action") ||
+        response.includes("greeting does not require") ||
+        response.length < 20)
+    ) {
+      return `Hello! I'm TransparAI, your educational AI assistant. I specialize in explaining machine learning and AI concepts through step-by-step reasoning.
+
+I can help you understand:
+• How AI systems work and make decisions
+• Machine learning concepts and algorithms  
+• Neural networks and deep learning
+• AI development processes and best practices
+
+What would you like to learn about today? Feel free to ask me anything about AI, machine learning, or how AI systems think and reason!`;
+    }
+
+    // Handle other unhelpful responses
+    if (
+      response.includes("does not require a specific action") ||
+      response.length < 10
+    ) {
+      return `I'm here to help you learn about AI and machine learning! Could you please ask me a specific question about:
+
+• AI concepts and how they work
+• Machine learning algorithms and processes
+• Neural networks and deep learning
+• How AI systems make decisions
+• Any other AI-related topic you're curious about
+
+What would you like to explore?`;
+    }
+
+    return response;
   }
 
   // Generate simulated reasoning trace when no actual traces are available
