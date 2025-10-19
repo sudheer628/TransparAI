@@ -1,7 +1,8 @@
 import axios from "axios";
 
-// Configure base URL - adjust port if your backend runs on different port
-const API_BASE_URL = "http://localhost:3002/api";
+// Configure base URL - use environment variable for production
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3002/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
