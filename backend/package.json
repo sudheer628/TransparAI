@@ -2,10 +2,10 @@
   "name": "transparai-backend",
   "version": "1.0.0",
   "description": "Backend API for TransparAI",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "verify-aws-setup": "node scripts/verify-aws-setup.js",
     "setup-aws": "node scripts/aws-setup-helper.js",
     "deploy": "serverless deploy"

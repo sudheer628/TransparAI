@@ -1,0 +1,9 @@
+# Ignore local dependencies and dev files
+node_modules
+npm-debug.log
+*.zip
+.DS_Store
+.git
+.gitignore
+.env
+/frontend

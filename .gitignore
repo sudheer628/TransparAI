@@ -1,7 +1,8 @@
 # Dependencies
+docs/
 node_modules/
 */node_modules/
-
+backend.zip
 # Environment variables
 .env
 .env.local
