@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 class BedrockService {
   constructor() {
     this.client = new BedrockAgentRuntimeClient({
-      region: process.env.AWS_REGION || "ap-south-1",
+      region: process.env.AWS_REGION || "us-east-1",
     });
 
     this.agentId = process.env.BEDROCK_AGENT_ID;
@@ -19,7 +19,7 @@ class BedrockService {
 
     console.log("✅ Bedrock Agent Service initialized");
     console.log(`   Agent ID: ${this.agentId}`);
-    console.log(`   Region: ${process.env.AWS_REGION || "ap-south-1"}`);
+    console.log(`   Region: ${process.env.AWS_REGION || "us-east-1"}`);
   }
 
   async invokeAgent(inputText, sessionId = null) {

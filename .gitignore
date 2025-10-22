@@ -2,7 +2,7 @@
 docs/
 node_modules/
 */node_modules/
-backend.zip
+transperai-backend.zip
 # Environment variables
 .env
 .env.local

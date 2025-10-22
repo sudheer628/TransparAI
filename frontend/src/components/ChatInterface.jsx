@@ -73,7 +73,7 @@ const ChatInterface = ({
       const errorMessage = {
         id: Date.now() + 1,
         type: "bot",
-        content: `Sorry, I encountered an error: ${error.message}. Please make sure the backend is running on port 3002.`,
+        content: `Sorry, I encountered an error: ${error.message}. Please check the backend connection.`,
         timestamp: new Date(),
         isError: true,
       };

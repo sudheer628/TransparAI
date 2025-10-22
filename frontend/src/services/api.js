@@ -1,8 +1,14 @@
 import axios from "axios";
 
-// Configure base URL - use environment variable for production
+// Configure base URL - use relative path for production deployment
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3002/api";
+  import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3002/api" : "/api");
+
+// For HTTPS domains, ensure secure connections
+const isProduction = !import.meta.env.DEV;
+const API_URL_FOR_STREAMING = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3002/api" : "/api");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -59,7 +65,7 @@ export const chatService = {
   // Stream chat responses (for real-time updates)
   async streamMessage(message, sessionId, onUpdate) {
     try {
-      const response = await fetch(`${API_BASE_URL}/bedrock/chat/stream`, {
+      const response = await fetch(`${API_URL_FOR_STREAMING}/bedrock/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
