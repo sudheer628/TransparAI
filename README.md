@@ -188,7 +188,7 @@ npm run dev
 # Visit http://localhost:3000
 ```
 
-## 🏆 Hackathon Submission Highlights
+## 🏆 Highlights
 
 ### **✅ Requirements Met**
 - ✅ **AWS Bedrock Integration**: Advanced agent with Nova Pro model
