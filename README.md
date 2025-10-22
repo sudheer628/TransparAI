@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![TransparAI Banner](https://via.placeholder.com/800x200/1e293b/06b6d4?text=TransparAI+-+Visualizing+How+AI+Thinks)
-
 **An Educational AI Assistant that Visualizes LLM Reasoning in Real-Time**
 
 [![AWS Bedrock](https://img.shields.io/badge/AWS-Bedrock-FF9900?style=flat&logo=amazon-aws)](https://aws.amazon.com/bedrock/)
@@ -199,16 +197,6 @@ npm run dev
 - ✅ **Production Ready**: Deployed and accessible globally
 - ✅ **Open Source**: Available for educational institutions
 
-### **🎯 Judge Evaluation Criteria**
-
-| Criteria | Our Achievement |
-|----------|----------------|
-| **Innovation** | First platform to visualize LLM reasoning in real-time ⭐⭐⭐⭐⭐ |
-| **Technical Excellence** | Modern stack, AWS best practices, scalable architecture ⭐⭐⭐⭐⭐ |
-| **User Experience** | Intuitive interface, educational focus, mobile-responsive ⭐⭐⭐⭐⭐ |
-| **Educational Impact** | Transforms AI learning, suitable for all skill levels ⭐⭐⭐⭐⭐ |
-| **AWS Integration** | Deep Bedrock integration, Nova Pro model, cloud-native ⭐⭐⭐⭐⭐ |
-
 ## 📊 Project Stats
 
 ```
@@ -240,38 +228,63 @@ npm run dev
 - Explore AI service orchestration
 - See production-ready AI implementations
 
-## 🚀 Future Roadmap
+## � Challenges Faced & Solutions
 
-### **Phase 2: Enhanced Visualization**
-- 3D reasoning flow diagrams
-- VR/AR educational experiences
-- Advanced interaction patterns
+### **Challenge 1: Real-time Reasoning Trace Extraction**
+**Problem**: AWS Bedrock Agent traces were complex nested JSON structures that were difficult to parse for visualization.
 
-### **Phase 3: Curriculum Integration**
-- LMS integration (Canvas, Blackboard)
-- Structured learning paths
-- Assessment and progress tracking
+**Solution**: 
+- Built a custom trace processor that recursively extracts reasoning steps
+- Created a state machine to handle different trace types (preprocessing, orchestration, postprocessing)
+- Implemented fallback mechanisms for incomplete traces
 
-### **Phase 4: Community Platform**
-- Share and discover reasoning flows
-- Collaborative learning features
-- Educator resource library
+```javascript
+const processReasoningTrace = (trace) => {
+  const steps = extractStepsRecursively(trace);
+  return sanitizeAndStructure(steps);
+};
+```
 
-## 👥 Team
+### **Challenge 2: Dynamic Flow Visualization Performance**
+**Problem**: React Flow was rendering slowly with complex reasoning diagrams, especially on mobile devices.
 
-**Developed for AWS AI Agent Global Hackathon by DEVPOST**
+**Solution**:
+- Implemented node virtualization for large flow diagrams
+- Added progressive loading of reasoning steps
+- Optimized component re-renders using React.memo and useMemo
+- Reduced DOM complexity with custom SVG nodes
 
-- **Role**: Full-Stack AI Developer & Educator
-- **Focus**: Making AI education accessible through innovative visualization
-- **Expertise**: AWS AI Services, Educational Technology, React/Node.js
+### **Challenge 3: Educational Content Complexity**
+**Problem**: AI responses were too technical for students new to machine learning concepts.
 
-## 🙏 Acknowledgments
+**Solution**:
+- Fine-tuned prompts to encourage step-by-step explanations
+- Added context injection for educational clarity
+- Implemented progressive disclosure in the UI
+- Created interactive tooltips for technical terms
 
-- **AWS Bedrock Team** - For providing powerful AI agent capabilities
-- **Amazon Nova Pro** - Exceptional foundation model performance
-- **React Flow Community** - Outstanding visualization library
-- **AWS Education** - Supporting AI learning initiatives
-- **DEVPOST Hackathon** - Platform for innovation and learning
+### **Challenge 4: AWS Service Integration**
+**Problem**: Bedrock Agent configuration required careful setup of IAM permissions and agent knowledge bases.
+
+**Solution**:
+- Created comprehensive setup documentation
+- Built verification scripts to test AWS connectivity
+- Implemented graceful error handling for service failures
+- Added local development environment with mock responses
+
+### **Challenge 5: Cross-platform Deployment**
+**Problem**: Application needed to work seamlessly across different environments (local, AWS, mobile).
+
+**Solution**:
+- Containerized the backend for consistent deployment
+- Implemented environment-specific configurations
+- Added responsive design principles for mobile compatibility
+- Created automated health checks and monitoring
+
+## 🏆 **Final Words**
+To AWS: Thanks for making cloud computing feel less cloudy! ⛅
+To DEVPOST: Thanks for giving our code a home on the internet! 🏠
+
 
 ---
 
